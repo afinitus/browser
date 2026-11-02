@@ -184,7 +184,7 @@ pub fn parse(allocator: Allocator, url: [:0]const u8, str: []const u8) !Cookie {
         }
     }
 
-    if (cookie_value.len > max_cookie_size) {
+    if (cookie_name.len + cookie_value.len > max_cookie_size) {
         return error.CookieSizeExceeded;
     }
 
@@ -2102,6 +2102,9 @@ test "Cookie: parse domain" {
 test "Cookie: parse limit" {
     try expectError(error.CookieHeaderSizeExceeded, "http://lightpanda.io/", repeat("v", 8192) ++ ";domain=lightpanda.io");
     try expectError(error.CookieSizeExceeded, "http://lightpanda.io/", repeat("v", 4096) ++ "v;domain=lightpanda.io");
+    // The limit covers the name and the value together.
+    try expectError(error.CookieSizeExceeded, "http://lightpanda.io/", repeat("n", 4096) ++ "=v");
+    try expectAttribute(.{ .value = "v" }, "http://lightpanda.io/", repeat("n", 4095) ++ "=v");
 }
 
 const ExpectedCookie = struct {
