@@ -127,7 +127,7 @@ pub fn parse(allocator: Allocator, url: [:0]const u8, str: []const u8) !Cookie {
         return error.InvalidNameValue;
     };
 
-    if (cookie_name.len == 0 and hasHiddenPrefix(cookie_value)) {
+    if (cookie_name.len == 0 and (cookie_value.len == 0 or hasHiddenPrefix(cookie_value))) {
         return error.InvalidNameValue;
     }
 
@@ -1843,6 +1843,10 @@ test "Cookie: parse key=value" {
     try expectError(error.InvalidNameValue, null, "=__Secure-abc=1");
     try expectError(error.InvalidNameValue, null, "=__HoSt-abc");
     try expectError(error.InvalidNameValue, null, "__Secure-abc");
+
+    // No name and no value: RFC 6265bis says to ignore the cookie entirely.
+    try expectError(error.InvalidNameValue, null, "=");
+    try expectError(error.InvalidNameValue, null, " = ; Path=/");
 
     // __Host- cookie-name-prefix rules:
     //   - must be Secure
